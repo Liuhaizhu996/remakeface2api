@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
-# Start RemakeFace WebUI backend (default port 8610)
+# Start RemakeFace2API. Safe on a fresh git clone: creates runtime dirs + .venv automatically.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 PORT="${PORT:-8610}"
+PYTHON="${PYTHON:-python3}"
+
+mkdir -p state server/data/generated examples
+
 if [ ! -x .venv/bin/python ]; then
-  echo "[init] creating venv..."
-  python3 -m venv .venv
-  .venv/bin/pip install -q --upgrade pip
-  .venv/bin/pip install -q -r requirements.txt
+  echo "[init] creating .venv..."
+  "$PYTHON" -m venv .venv || {
+    echo "[error] python venv unavailable. Debian/Ubuntu: sudo apt install -y python3-venv" >&2
+    exit 1
+  }
 fi
-echo "[run] http://0.0.0.0:${PORT}  (ctrl-c to stop)"
-exec .venv/bin/python -m uvicorn server.app:app --host 0.0.0.0 --port "${PORT}"
+
+.venv/bin/python -m pip install -q --upgrade pip
+.venv/bin/python -m pip install -q -r requirements.txt
+
+echo "[run] http://0.0.0.0:${PORT}  (Ctrl+C to stop)"
+exec .venv/bin/python -m uvicorn server.app:app --host 0.0.0.0 --port "$PORT"
