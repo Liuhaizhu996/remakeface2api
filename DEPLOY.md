@@ -14,7 +14,7 @@ bash deploy.sh
 PORT=9000 bash deploy.sh
 ```
 
-`deploy.sh` 会自动创建运行目录、创建 `.venv`、安装 `requirements.txt` 并启动 Uvicorn。
+`deploy.sh` 会自动检查 Python 3.10+、创建运行目录、创建 `.venv`、安装 `requirements.txt` 并启动 Uvicorn。
 
 ## `.venv` 为什么不上传
 
@@ -23,7 +23,7 @@ PORT=9000 bash deploy.sh
 ## 系统要求
 
 - Git
-- Python 3（推荐 3.9+）
+- Python 3.10+
 - 能访问 PyPI 安装 Python 包
 - 能访问项目所需远程 API
 
