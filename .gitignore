@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
+
+# Runtime/generated data
+server/data/generated/
+server/data/jobs.json
+server/data/*.log
