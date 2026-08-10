@@ -15,7 +15,7 @@
 - `client/`、`server/`、`tests/`、`docs/`：项目源码；
 - 运行时目录和状态文件由程序自动创建，不需要预先提交。
 
-因此一台全新的服务器只要有 `git` 和 Python 3，就能从源码完整重建运行环境。
+因此一台全新的服务器只要有 `git` 和 Python 3.10+，就能从源码完整重建运行环境。
 
 ## 一键部署（推荐）
 
@@ -29,10 +29,11 @@ bash deploy.sh
 
 脚本会自动完成：
 
-1. 创建 `state/`、`server/data/generated/` 等运行目录；
-2. 创建本机专用 `.venv`；
-3. 安装/更新 `requirements.txt` 中全部依赖；
-4. 启动 FastAPI + WebUI，默认监听 `0.0.0.0:8610`。
+1. 检查 Python 3.10+；
+2. 创建 `state/`、`server/data/generated/` 等运行目录；
+3. 创建本机专用 `.venv`；
+4. 安装/更新 `requirements.txt` 中全部依赖；
+5. 启动 FastAPI + WebUI，默认监听 `0.0.0.0:8610`。
 
 启动后访问：
 
