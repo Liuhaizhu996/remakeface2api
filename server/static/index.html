@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RemakeFace Studio — AI 生图控制台</title>
+<style>
+  :root {
+    --bg: #0b0e14; --panel: #121722; --panel2: #0f141d; --line: #232c3d;
+    --text: #e6ebf4; --muted: #8b96ab; --accent: #5b8cff; --accent2: #7c5bff;
+    --ok: #35d07f; --err: #ff5d5d; --warn: #ffb454;
+    --radius: 12px; --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: radial-gradient(1200px 600px at 80% -10%, #141b2b 0%, var(--bg) 55%); color: var(--text); font: 15px/1.55 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 100vh; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 64px; }
+  header { display: flex; align-items: center; gap: 14px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+  header .logo { width: 38px; height: 38px; border-radius: 10px; flex: 0 0 auto; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: grid; place-items: center; }
+  header .logo svg { width: 22px; height: 22px; }
+  header h1 { margin: 0; font-size: 19px; letter-spacing: .2px; }
+  header .sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  #health { margin-left: auto; display: flex; align-items: center; gap: 8px; font: 12px var(--mono); color: var(--muted); background: var(--panel2); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+  #health .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+  #health.ok .dot { background: var(--ok); }
+  #health.bad .dot { background: var(--err); }
+  main { display: grid; grid-template-columns: 360px 1fr; gap: 22px; margin-top: 22px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+  .card h2 { margin: 0 0 14px; font-size: 13px; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
+  label { display: block; font-size: 12.5px; color: var(--muted); margin: 14px 0 6px; }
+  label:first-of-type { margin-top: 0; }
+  select, textarea { width: 100%; background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font: 14px inherit; outline: none; transition: border-color .15s, box-shadow .15s; }
+  select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,140,255,.18); }
+  textarea { resize: vertical; min-height: 120px; }
+  select option { background: var(--panel2); }
+  .field-desc { font-size: 12px; color: var(--muted); margin-top: 6px; min-height: 16px; }
+  .model-grid { display: grid; gap: 8px; }
+  .model-opt { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--panel2); transition: border-color .15s, background .15s; }
+  .model-opt:hover { border-color: #34405a; }
+  .model-opt.active { border-color: var(--accent); background: rgba(91,140,255,.08); }
+  .model-opt input { position: absolute; opacity: 0; }
+  .model-opt .t { font-weight: 600; font-size: 13.5px; }
+  .model-opt .d { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .model-opt .tag { font: 11px var(--mono); color: var(--accent); margin-left: auto; }
+  .ratio-row { display: flex; flex-wrap: wrap; gap: 7px; }
+  .ratio-btn { cursor: pointer; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font-size: 13px; transition: border-color .15s, background .15s; }
+  .ratio-btn:hover { border-color: #34405a; }
+  .ratio-btn.active { border-color: var(--accent); background: rgba(91,140,255,.12); color: #cfe0ff; }
+  .upload { position: relative; border: 1.5px dashed #33405a; border-radius: 10px; padding: 14px; text-align: center; color: var(--muted); font-size: 13px; cursor: pointer; transition: border-color .15s; }
+  .upload:hover { border-color: var(--accent); }
+  .upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload.has-img { border-style: solid; border-color: var(--accent); padding: 6px; }
+  .upload img { display: block; max-height: 180px; margin: 0 auto; border-radius: 6px; }
+  .upload .hint { margin-top: 8px; font-size: 12px; }
+  .char-count { text-align: right; font: 11px var(--mono); color: var(--muted); margin-top: 4px; }
+  #genBtn { margin-top: 18px; width: 100%; border: 0; border-radius: 10px; padding: 13px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: .3px; transition: filter .15s, transform .05s; }
+  #genBtn:hover { filter: brightness(1.08); }
+  #genBtn:active { transform: scale(.99); }
+  #genBtn:disabled { opacity: .55; cursor: not-allowed; filter: none; }
+  .status-line { display: flex; align-items: center; gap: 8px; margin-top: 12px; font: 12px var(--mono); color: var(--muted); min-height: 18px; }
+  .status-line .spinner { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .status-line.error { color: var(--err); }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .gallery:empty::after { content: "还没有生成结果。填好参数点「开始生成」。"; color: var(--muted); font-size: 13px; }
+  .shot { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .shot img { width: 100%; display: block; aspect-ratio: 1 / 1; object-fit: cover; background: #000; }
+  .shot .meta { padding: 8px 10px; font-size: 11.5px; color: var(--muted); }
+  .shot .meta .model { color: var(--text); font-weight: 600; }
+  .shot a.dl { display: inline-block; margin-top: 6px; color: var(--accent); font-size: 12px; text-decoration: none; }
+  .shot a.dl:hover { text-decoration: underline; }
+  .history { display: grid; gap: 6px; margin-top: 6px; }
+  .hist-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; }
+  .hist-item .st { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); flex: 0 0 auto; }
+  .hist-item.done .st { background: var(--ok); }
+  .hist-item.failed .st { background: var(--err); }
+  .hist-item .p { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+  .hist-item .p b { color: var(--text); font-weight: 500; }
+  .hist-item code { font: 11px var(--mono); color: var(--muted); }
+  footer { margin-top: 28px; color: var(--muted); font-size: 12px; text-align: center; }
+  footer code { font: 11px var(--mono); background: var(--panel2); padding: 2px 6px; border-radius: 5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2.2"/><path d="M4 17l4.5-4.5 3 3L16 11l4 4"/></svg></div>
+    <div><h1>RemakeFace Studio</h1><div class="sub">AppBMS ai-image-gen 控制台 · clean-room client</div></div>
+    <div id="health"><span class="dot"></span><span id="healthText">检测中…</span></div>
+  </header>
+  <main>
+    <section class="card">
+      <h2>生成参数</h2>
+      <label>模型</label><div class="model-grid" id="modelGrid"></div>
+      <label>比例</label><div class="ratio-row" id="ratioRow"></div>
+      <label>提示词 Prompt</label>
+      <textarea id="prompt" maxlength="20000" placeholder="例如：a futuristic cyberpunk portrait, neon rim light, cinematic, high detail"></textarea>
+      <div class="char-count"><span id="charCount">0</span> / 20000</div>
+      <label>参考图（可选）</label>
+      <div class="upload" id="uploadBox"><input type="file" id="file" accept="image/*"><div class="hint" id="uploadHint">点击选择参考图（可选，用于风格迁移）</div></div>
+      <button id="genBtn">开始生成</button><div class="status-line" id="status"></div>
+    </section>
+    <section class="card">
+      <h2>生成结果</h2><div class="gallery" id="gallery"></div><div style="height:20px"></div>
+      <h2>最近任务</h2><div class="history" id="history"></div>
+    </section>
+  </main>
+  <footer>本地服务 · <code id="apiRoot">/api</code> · API 文档见 <code>docs/PROTOCOL.md</code></footer>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const state = { model: "general_v4.0_s", ratio: "1:1", prompt: "" };
+async function init() {
+  const [models, ratios] = await Promise.all([fetch("/api/models").then(r => r.json()), fetch("/api/ratios").then(r => r.json())]);
+  const grid = $("#modelGrid");
+  models.models.forEach(m => {
+    const el = document.createElement("label");
+    el.className = "model-opt" + (m.id === state.model ? " active" : "");
+    el.innerHTML = `<input type="radio" name="model" value="${m.id}" ${m.id===state.model?"checked":""}><span><span class="t">${m.name}</span><div class="d">${m.description}</div></span><span class="tag">${m.id}</span>`;
+    el.addEventListener("click", () => { document.querySelectorAll(".model-opt").forEach(x => x.classList.remove("active")); el.classList.add("active"); state.model = m.id; });
+    grid.appendChild(el);
+  });
+  const row = $("#ratioRow");
+  ratios.ratios.forEach(r => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "ratio-btn" + (r === state.ratio ? " active" : ""); b.textContent = r;
+    b.addEventListener("click", () => { document.querySelectorAll(".ratio-btn").forEach(x => x.classList.remove("active")); b.classList.add("active"); state.ratio = r; });
+    row.appendChild(b);
+  });
+  health(); loadHistory();
+}
+async function health() {
+  try {
+    const r = await fetch("/api/health"); const j = await r.json(); const h = $("#health");
+    if (j.ok) { h.className = "ok"; $("#healthText").textContent = `会话 ${j.session.slice(0,14)}… · trust=${j.trustLevel}`; }
+    else { h.className = "bad"; $("#healthText").textContent = "后端异常"; }
+  } catch { $("#health").className = "bad"; $("#healthText").textContent = "后端离线"; }
+}
+$("#prompt").addEventListener("input", e => { state.prompt = e.target.value; $("#charCount").textContent = e.target.value.length; });
+let uploaded = null;
+const up = $("#uploadBox"), fi = $("#file");
+fi.addEventListener("change", () => { const f = fi.files[0]; if (!f) return; const url = URL.createObjectURL(f); up.classList.add("has-img"); up.innerHTML = `<img src="${url}" alt=""><div class="hint">${f.name}</div>`; uploaded = f; });
+$("#genBtn").addEventListener("click", async () => {
+  const btn = $("#genBtn"), st = $("#status");
+  if (!state.prompt.trim()) { st.textContent = "请先填写提示词"; st.className = "status-line error"; return; }
+  btn.disabled = true; st.className = "status-line"; st.innerHTML = `<span class="spinner"></span> 任务已提交，等待 AppBMS 队列…`;
+  const fd = new FormData(); fd.append("prompt", state.prompt); fd.append("model", state.model); fd.append("ratio", state.ratio); if (uploaded) fd.append("file", uploaded);
+  try { const r = await fetch("/api/generate", { method: "POST", body: fd }); const j = await r.json(); if (!r.ok) throw new Error(j.detail || r.statusText); pollJob(j.jobId); }
+  catch (e) { st.className = "status-line error"; st.textContent = "提交失败: " + e.message; btn.disabled = false; }
+});
+async function pollJob(jobId) {
+  const st = $("#status"), btn = $("#genBtn");
+  for (let i = 0; i < 150; i++) {
+    await new Promise(r => setTimeout(r, 2500)); let j;
+    try { j = await (await fetch(`/api/jobs/${jobId}`)).json(); } catch { continue; }
+    if (j.status === "completed") { st.className = "status-line"; st.innerHTML = "✔ 完成"; addResult(j); loadHistory(); btn.disabled = false; return; }
+    if (j.status === "failed") { st.className = "status-line error"; st.textContent = "失败: " + (j.error || "unknown"); loadHistory(); btn.disabled = false; return; }
+    st.innerHTML = `<span class="spinner"></span> 生成中… (${jobId.slice(0,8)})`;
+  }
+  st.className = "status-line error"; st.textContent = "超时"; btn.disabled = false;
+}
+function addResult(j) {
+  const g = $("#gallery");
+  (j.imageUrls || []).forEach(u => { const s = document.createElement("div"); s.className = "shot"; s.innerHTML = `<img src="${u}" alt="生成结果"><div class="meta"><span class="model">${j.model}</span> · ${j.ratio} · <span class="p">${escapeHtml(j.prompt.slice(0, 48))}</span><br><a class="dl" href="${u}" download>下载原图</a></div>`; g.prepend(s); });
+}
+function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+async function loadHistory() {
+  try {
+    const j = await (await fetch("/api/history?limit=10")).json(); const h = $("#history"); h.innerHTML = "";
+    (j.items || []).forEach(it => { const d = document.createElement("div"); d.className = "hist-item " + (it.status === "completed" ? "done" : it.status === "failed" ? "failed" : ""); d.innerHTML = `<span class="st"></span><span class="p"><b>${it.status}</b> — ${escapeHtml((it.prompt||"").slice(0,40))}</span><code>${it.model}</code>`; h.appendChild(d); });
+  } catch {}
+}
+init();
+</script>
+</body>
+</html>
