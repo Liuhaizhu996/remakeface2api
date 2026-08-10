@@ -8,7 +8,16 @@ __pycache__/
 .idea/
 .vscode/
 
+# Device/session runtime state
+state/
+
 # Runtime/generated data
 server/data/generated/
 server/data/jobs.json
 server/data/*.log
+
+# Local test outputs
+examples/*
+!examples/.gitkeep
+result_swap.jpg
+result_swap.png
