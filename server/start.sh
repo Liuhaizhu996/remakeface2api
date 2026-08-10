@@ -6,6 +6,11 @@ cd "$ROOT"
 PORT="${PORT:-8610}"
 PYTHON="${PYTHON:-python3}"
 
+if ! "$PYTHON" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
+  echo "[error] Python 3.10+ is required." >&2
+  exit 1
+fi
+
 mkdir -p state server/data/generated examples
 
 if [ ! -x .venv/bin/python ]; then
