@@ -8,7 +8,12 @@ PORT="${PORT:-8610}"
 PYTHON="${PYTHON:-python3}"
 
 if ! command -v "$PYTHON" >/dev/null 2>&1; then
-  echo "[error] python3 not found. Please install Python 3.9+ first." >&2
+  echo "[error] python3 not found. Please install Python 3.10+ first." >&2
+  exit 1
+fi
+
+if ! "$PYTHON" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)'; then
+  echo "[error] Python 3.10+ is required. Current: $($PYTHON --version 2>&1)" >&2
   exit 1
 fi
 
